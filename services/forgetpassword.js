@@ -67,13 +67,17 @@ async function sendForgetMail(receiverEmail) {
   `;
 
     // ✅ Create transporter
+    console.log('host:',process.env.SMTP_HOST)
+    console.log('host:',process.env.SMTP_PORT)
+    console.log('us:',process.env.SMTP_USER);
+    console.log('pass:',process.env.SMTP_PASS)
     const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
+        host: 'smtp-relay.brevo.com',
+        port: 587,
         secure: false,
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user:'991228001@smtp-brevo.com',
+            pass:process.env.SMTP_PASS,
         },
     });
 
