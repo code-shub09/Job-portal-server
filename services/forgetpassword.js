@@ -4,7 +4,26 @@ const path = require("path");
 const User = require("../model/user");
 const { customError } = require("../utils/errorClass");
 const { tokenGen } = require("../utils/generateJWT_Token");
+const Brevo = require("@getbrevo/brevo");
 
+const apiInstance = new Brevo.TransactionalEmailsApi();
+apiInstance.authentications['apiKey'].apiKey = process.env.BRAVO_API;
+
+async function mailHandler(receiverEmail,htmlTemplate){
+    const email = new Brevo.SendSmtpEmail();
+  email.subject = "Reset Your Password - JobZilla";
+  email.sender = { name: "JobZilla Support", email: process.env.FROM_EMAIL };
+  email.to = [{ email: receiverEmail }];
+  email.htmlContent = htmlTemplate
+
+  try {
+    await apiInstance.sendTransacEmail(email);
+    console.log(`✅ Password reset email sent to ${receiverEmail}`);
+  } catch (err) {
+    console.error("❌ Brevo API failed:", err);
+  }
+    
+}
 async function sendForgetMail(receiverEmail) {
 
     console.log('forget pass-shub', receiverEmail)
@@ -66,42 +85,49 @@ async function sendForgetMail(receiverEmail) {
   </div>
   `;
 
-    // ✅ Create transporter
-    console.log('host:', process.env.SMTP_HOST)
-    console.log('host:', process.env.SMTP_PORT)
-    console.log('us:', process.env.SMTP_USER);
-    console.log('pass:', process.env.SMTP_PASS)
-    const transporter = nodemailer.createTransport({
-        host: 'smtp-relay.brevo.com',
-        port: 587,
-        secure: false,
-        auth: {
-            user: '991228001@smtp-brevo.com',
-            pass: process.env.SMTP_PASS,
-        },
-    });
 
-    // ✅ Include logo inline as attachment
-    const mailOptions = {
-        from: `"JobZilla Support" <${process.env.FROM_EMAIL}>`,
-        to: receiverEmail,
-        subject: "Reset Your Password - JobZilla",
-        html: htmlTemplate,
-        attachments: [
-            {
-                filename: "logoJobZilla.png",
-                path: imgLogo,
-                cid: "jobzilla_logo", // must match cid used in <img src="cid:jobzilla_logo">
-            },
-        ],
-    };
+    await mailHandler(receiverEmail,htmlTemplate);
 
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log(`✅ Password reset email sent to ${receiverEmail}`);
-    } catch (err) {
-        console.error("❌ Email send failed:", err);
-    }
+
 }
 
 module.exports = { sendForgetMail };
+
+
+    // ✅ Create transporter
+    // console.log('host:', process.env.SMTP_HOST)
+    // console.log('host:', process.env.SMTP_PORT)
+    // console.log('us:', process.env.SMTP_USER);
+    // console.log('pass:', process.env.SMTP_PASS)
+    // const transporter = nodemailer.createTransport({
+    //     host: 'smtp-relay.brevo.com',
+    //     port: 587,
+    //     secure: false,
+    //     auth: {
+    //         user: '991228001@smtp-brevo.com',
+    //         pass: process.env.SMTP_PASS,
+    //     },
+    // });
+
+    // // ✅ Include logo inline as attachment
+    // const mailOptions = {
+    //     from: `"JobZilla Support" <${process.env.FROM_EMAIL}>`,
+    //     to: receiverEmail,
+    //     subject: "Reset Your Password - JobZilla",
+    //     html: htmlTemplate,
+    //     attachments: [
+    //         {
+    //             filename: "logoJobZilla.png",
+    //             path: imgLogo,
+    //             cid: "jobzilla_logo", // must match cid used in <img src="cid:jobzilla_logo">
+    //         },
+    //     ],
+    // };
+
+    // try {
+    //      console.log('transporter--');
+    //     await transporter.sendMail(mailOptions);
+    //     console.log(`✅ Password reset email sent to ${receiverEmail}`);
+    // } catch (err) {
+    //     console.error("❌ Email send failed:", err);
+    // }
