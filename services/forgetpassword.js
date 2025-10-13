@@ -6,22 +6,22 @@ const { customError } = require("../utils/errorClass");
 const { tokenGen } = require("../utils/generateJWT_Token");
 
 async function sendForgetMail(receiverEmail) {
-    
-    console.log('forget pass-shub',receiverEmail)
+
+    console.log('forget pass-shub', receiverEmail)
     const user = await User.findOne({ email: receiverEmail });
     if (!user) throw new customError("Email not exists", 404);
 
-    
-    console.log('reset----',receiverEmail);
+
+    console.log('reset----', receiverEmail);
     const resetToken = await tokenGen(user);
-    console.log('reset----',resetToken);
+    console.log('reset----', resetToken);
 
     user.resetToken = resetToken;
     user.resetTokenExpiredAt = Date.now() + 15 * 60 * 1000;
     await user.save();
     const resetLink = `${process.env.CLIENT_URL}/#/reset-password/${resetToken}`;
 
-    console.log('reset----',resetLink);
+    console.log('reset----', resetLink);
     // ✅ Reference image file
     const imgLogo = path.join(__dirname, "../utils/logoJobZilla.png");
 
@@ -67,17 +67,17 @@ async function sendForgetMail(receiverEmail) {
   `;
 
     // ✅ Create transporter
-    console.log('host:',process.env.SMTP_HOST)
-    console.log('host:',process.env.SMTP_PORT)
-    console.log('us:',process.env.SMTP_USER);
-    console.log('pass:',process.env.SMTP_PASS)
+    console.log('host:', process.env.SMTP_HOST)
+    console.log('host:', process.env.SMTP_PORT)
+    console.log('us:', process.env.SMTP_USER);
+    console.log('pass:', process.env.SMTP_PASS)
     const transporter = nodemailer.createTransport({
         host: 'smtp-relay.brevo.com',
         port: 587,
         secure: false,
         auth: {
-            user:'991228001@smtp-brevo.com',
-            pass:process.env.SMTP_PASS,
+            user: '991228001@smtp-brevo.com',
+            pass: process.env.SMTP_PASS,
         },
     });
 
@@ -96,8 +96,12 @@ async function sendForgetMail(receiverEmail) {
         ],
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to ${receiverEmail}`);
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Password reset email sent to ${receiverEmail}`);
+    } catch (err) {
+        console.error("❌ Email send failed:", err);
+    }
 }
 
 module.exports = { sendForgetMail };
