@@ -1,12 +1,4 @@
-// import { createUser } from "../services/createUser";
-// import { userLogin } from "../services/userLogin";
-// import { customError } from "../utils/errorClass";
 
-// const Admin = require("../model/admin");
-// const Employer = require("../model/employer");
-// const Jobseeker = require("../model/job_seeker");
-// const User = require("../model/user");
-// const { tokenGen } = require("../utils/generateJWT_Token");
 
 const { createUser } = require("../services/createUser");
 const { userLogin } = require("../services/userLogin");
