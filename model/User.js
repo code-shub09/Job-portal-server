@@ -19,8 +19,8 @@ const UserSchema = new mongoose.Schema({
   
 
   role: { type: String, enum: ["jobseeker", "employer", "admin"], default: "jobseeker" },
-  otp:{type:String},
-  otpExpiredAt:{type:Date}
+  resetToken:{type:String},
+  resetTokenExpiredAt:{type:Date}
 
  
 }, { timestamps: true });

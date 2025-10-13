@@ -12,10 +12,18 @@ const { createUser } = require("../services/createUser");
 const { userLogin } = require("../services/userLogin");
 const { customError } = require("../utils/errorClass");
 const { tokenGen } = require("../utils/generateJWT_Token");
+let nodemailer = require('nodemailer');
+
+const {sendForgetMail}=require('../services/forgetpassword');
+const User = require("../model/user");
+// const { responseHandler } = require("../utils/responseHandler");
+const responseHandler = require("../utils/responseHandler");
+const { logic_resetPassword } = require("../services/logic_restPassword");
 
 
 
- async function register(req, res) {
+
+async function register(req, res) {
 
 
     const { newUser, token } = await createUser(req.body);
@@ -33,9 +41,10 @@ const { tokenGen } = require("../utils/generateJWT_Token");
 
 }
 
- async function login(res, req) {
+async function login( req,res) {
 
-    const token=userLogin(req.body);
+    const token = await userLogin(req.body);
+    console.log('token is good res')
 
     res.status(200).cookie('jwt', token, {
         maxAge: 24 * 60 * 60 * 1000, // 1 day,
@@ -44,8 +53,43 @@ const { tokenGen } = require("../utils/generateJWT_Token");
         sameSite: "none", // Required for cross-origin cookies
     }).json({
         message: "User logged in succesfully ",
-        role: newUser.role
+       
     })
 }
 
-module.exports = { register, login };
+async function forgetPassword(req,res) {
+    const {email}=req.body;
+
+     // check whether this email is registered or not
+
+    await sendForgetMail(email);
+
+
+    res.json({ message: "Password reset link sent to email" });
+   
+}
+
+async function resetPassword(req,res) {
+    const {password}=req.body;
+    const {token}= req.params;
+    console.log('params',req.params)
+    console.log('sent user pass',req.body);
+
+     // check whether this email is registered or not
+
+    await logic_resetPassword(password,token);
+    console.log('succes -reset')
+    res.status(200).json({ message: "Password reset successfull" });
+}
+
+
+// module.exports.forgetPassword=responseHandler(forgetPassword);
+// module.exports.register=responseHandler(register);
+// module.exports.login=responseHandler(login);
+
+module.exports = {
+  register: responseHandler(register),
+  login: responseHandler(login),
+  forgetPassword: responseHandler(forgetPassword),
+  resetPassword:responseHandler(resetPassword)
+};
