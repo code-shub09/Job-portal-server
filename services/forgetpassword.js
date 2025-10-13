@@ -12,16 +12,16 @@ async function sendForgetMail(receiverEmail) {
     if (!user) throw new customError("Email not exists", 404);
 
     
-
-    const resetToken = await tokenGen(user);
     console.log('reset----',receiverEmail);
+    const resetToken = await tokenGen(user);
+    console.log('reset----',resetToken);
 
     user.resetToken = resetToken;
     user.resetTokenExpiredAt = Date.now() + 15 * 60 * 1000;
     await user.save();
     const resetLink = `${process.env.CLIENT_URL}/#/reset-password/${resetToken}`;
 
-
+    console.log('reset----',resetLink);
     // ✅ Reference image file
     const imgLogo = path.join(__dirname, "../utils/logoJobZilla.png");
 
