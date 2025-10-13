@@ -7,7 +7,7 @@ const { tokenGen } = require("../utils/generateJWT_Token");
 const Brevo = require("@getbrevo/brevo");
 
 const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.authentications['apiKey'].apiKey = process.env.BRAVO_API;
+apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
 
 async function mailHandler(receiverEmail,htmlTemplate){
     const email = new Brevo.SendSmtpEmail();
