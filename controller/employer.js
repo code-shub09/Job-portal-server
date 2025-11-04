@@ -47,8 +47,8 @@ async function register(req, res) {
     res.status(200).cookie('jwt', token, {
         maxAge: 24 * 60 * 60 * 1000, // 1 day,
         httpOnly: true,
-        secure: false, // Use true if your site uses HTTPS
-        sameSite: "lax", // Required for cross-origin cookies
+        secure: true, // Use true if your site uses HTTPS
+        sameSite: "none", // Required for cross-origin cookies
     }).json({
         message: "User registerd succesfully ",
         role: newUser.role
