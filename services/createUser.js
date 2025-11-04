@@ -6,32 +6,50 @@ const { tokenGen } = require("../utils/generateJWT_Token");
 const { customError } = require("../utils/errorClass");
 
  async function createUser(userDetails){
+    console.log('userdetails: ',userDetails)
     const { email, password,role,profile }=userDetails;
-    const userExists = await User.findOne({ email });
-
+    let userExists = null;
+    try {
+        userExists=await User.findOne({ email })
+        
+    } catch (error) {
+        console.log(error)
+     
+    }
+   
     if (userExists) {
+        console.log('userexists ',userExists);
+        console.log('create user ---');
         throw new customError('User already exists',409);
-       
     }
 
-
+    //  console.log('create user');
     // create user
-    const newUser = await User.create({ email: email, password: password});
+
+     await sendForgetMail(email);
+
+    const newUser = await User.create({ email: email, password: password,role:userDetails.role});
+      console.log('create newuser',newUser);
     // await newUser.save();
 
     // role specific profile
     if (role == 'jobseeker') {
-        const newJobSeeker = await Jobseeker.create({ user: newUser._id, fullName: profile.fullName})
+        const newJobSeeker = await Jobseeker.create({ user: newUser._id, firstName: profile.firstName,lastName:profile.lastName})
+        console.log('job -seeker:',newJobSeeker);
     } else if (role == 'employer') {
-        await Employer.create({
+        const emp=await Employer.create({
             user: newUser._id,
             companyName: profile.companyName,
-            companyWebsite: profile.companyWebsite,
+            companyWebsite: profile.website,
+            companyDescription:profile.companyDescription,
+            companyCity:profile.city,
+            companyAddress:profile.address,
             industry: profile.industry,
-            contactPerson: profile.contactPerson,
+            Designation:profile.designation,
+            Name: profile.contactName,
             phone: profile.phone,
-            companyLogoUrl: profile.companyLogoUrl
         })
+        console.log('emp:',emp);
     } else if (role === 'admin') {
         await Admin.create({ user: newUser._id, fullName: profile.fullName, phone: profile.phone });
     }

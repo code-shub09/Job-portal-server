@@ -3,45 +3,59 @@ const jwt = require('jsonwebtoken');
 const Jobseeker = require('../model/job_seeker');
 const User = require('../model/user');
 
-
 const protect = async (req, res, next) => {
-
-    if (req.headers.authorization && req.headers.authorization.startwith('Bearer')) {
-        try {
-            const token = req.headers.authorization.split(" ")[1];
-            const decoded = jwt.verify(token, process.env);
-
-
-            const user = await User.find({ id: decoded.id }).select('-password');
-            if (!user) {
-                return res.status(401).json({ message: "User not found" });
-            }
-
-            req.user = user;
-            // passing to next middelware
-            next();
-
-        } catch (error) {
-            console.error(error);
-            return res.status(401).json({ message: "Not authorized, token failed" });
-
+    console.log('head: ', req.headers)
+    try {
+        let token;
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            token = req.headers.authorization.split(" ")[1];
+        } else if (req.cookies && req.cookies.jwt) {
+            token = req.cookies.jwt;
         }
+
+        if (!token) {
+            console.log('❌ No token found in headers or cookies');
+            return res.status(401).json({ message: "No token provided" });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+
+        const user = await User.findById(decoded.id).select('-password');
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
+        req.user = user;
+        console.log('user authenticated :',req.user);
+        
+        // passing to next middelware
+        next();
     }
+    catch (error) {
+        console.error('JWT Auth Error:', error.message);
+        return res.status(401).json({ message: "Not authorized, token failed" });
 
 
+    }
+    
 }
 
 
 
 
 const authorize = (...roles) => {
-    function middelwareAuth0(req, res, next) {
+    return function middelwareAuth0(req, res, next) {
+        if (!req.user) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
         if (!roles.includes(req.user.role)) {
             return res.status(403).json({ message: "Forbidden: Access denied" });
         }
         next();
     };
-    return middelwareAuth0(roles)
+
 }
 
-module.exports.protect = protect;
+module.exports = {
+    protect, authorize
+};

@@ -24,6 +24,8 @@ async function mailHandler(receiverEmail,htmlTemplate){
   }
     
 }
+
+
 async function sendForgetMail(receiverEmail) {
 
     console.log('forget pass-shub', receiverEmail)

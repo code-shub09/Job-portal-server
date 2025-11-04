@@ -6,10 +6,12 @@ const cookie_parser = require('cookie-parser');
 const db=require('./config/database');
 db();
 const authRoute= require('./routes/authRoute');
-
+const empRoute= require('./routes/employerRoute');
+const jobSeekarRoute=require('./routes/jobseekarRoute');
 require('dotenv').config();
 // parsing json data
 app.use(express.json());
+app.use(cookie_parser());
 
 // Simplified CORS configuration
 const allowedOrigins = [
@@ -44,6 +46,8 @@ app.use((req,res,next)=>{
 });
 
 app.use('/auth',authRoute);
+app.use('/employer',empRoute);
+app.use('/jobseekar',jobSeekarRoute);
 
 app.listen(process.env.PORT,()=>{
     console.log(`Server running on port ${process.env.PORT}`);

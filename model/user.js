@@ -20,9 +20,9 @@ const UserSchema = new mongoose.Schema({
 
   role: { type: String, enum: ["jobseeker", "employer", "admin"], default: "jobseeker" },
   resetToken:{type:String},
-  resetTokenExpiredAt:{type:Date}
-
- 
+  resetTokenExpiredAt:{type:Date},
+  verifyOtp:{type:String},
+  expireOtp:{type:Date}
 }, { timestamps: true });
 
 
