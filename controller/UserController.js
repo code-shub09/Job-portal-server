@@ -165,6 +165,7 @@ async function otpCheck(req, res) {
 
     try {
         const { email, otp,password } = req.body;
+        console.log('otp body:',req.body);
         const {newUser,token}=await verifyOtp(email,password, otp);
         res.status(200).cookie('jwt', token, {
             maxAge: 24 * 60 * 60 * 1000, // 1 day,
