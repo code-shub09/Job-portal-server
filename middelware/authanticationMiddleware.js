@@ -4,7 +4,7 @@ const Jobseeker = require('../model/job_seeker');
 const User = require('../model/user');
 
 const protect = async (req, res, next) => {
-    console.log('head: ', req.headers)
+    console.log('head: ', req.header)
     try {
         let token;
         if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -26,18 +26,17 @@ const protect = async (req, res, next) => {
             return res.status(401).json({ message: "User not found" });
         }
         req.user = user;
-        console.log('user authenticated :',req.user);
+        // console.log('user authenticated :',req.user);
         
         // passing to next middelware
+        console.log('head: isne')
         next();
     }
     catch (error) {
         console.error('JWT Auth Error:', error.message);
         return res.status(401).json({ message: "Not authorized, token failed" });
-
-
     }
-    
+    // console.log('not---- athorised')zzxz
 }
 
 
@@ -45,9 +44,12 @@ const protect = async (req, res, next) => {
 
 const authorize = (...roles) => {
     return function middelwareAuth0(req, res, next) {
+        console.log('user  auth')
         if (!req.user) {
+            console.log('user not auth')
             return res.status(401).json({ message: "User not authenticated" });
         }
+        console.log('user  ---auth');
         if (!roles.includes(req.user.role)) {
             return res.status(403).json({ message: "Forbidden: Access denied" });
         }

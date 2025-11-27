@@ -7,6 +7,7 @@ const { tokenGen } = require("../utils/generateJWT_Token");
 const Brevo = require("@getbrevo/brevo");
 const otp = require("../model/otp");
 const Otp = require("../model/otp");
+const Jobseeker = require("../model/job_seeker");
 
 const apiInstance = new Brevo.TransactionalEmailsApi();
 apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
@@ -14,86 +15,90 @@ apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
 
 
 async function mailHandler(receiverEmail, htmlTemplate) {
-    const email = new Brevo.SendSmtpEmail();
-    email.subject = "Your JobZilla verification code";
-    email.sender = { name: "JobZilla", email: process.env.FROM_EMAIL };
-    email.to = [{ email: receiverEmail }];
-    email.htmlContent = htmlTemplate;
+  const email = new Brevo.SendSmtpEmail();
+  email.subject = "Your JobZilla verification code";
+  email.sender = { name: "JobZilla", email: process.env.FROM_EMAIL };
+  email.to = [{ email: receiverEmail }];
+  email.htmlContent = htmlTemplate;
 
-    try {
-        await apiInstance.sendTransacEmail(email);
-        console.log(`✅ verify email sent to ${receiverEmail}`);
-    } catch (err) {
-        console.error("❌ Brevo API failed:", err);
-    }
+  try {
     await apiInstance.sendTransacEmail(email);
+    console.log(`✅ verify email sent to ${receiverEmail}`);
+  } catch (err) {
+    console.error("❌ Brevo API failed:", err);
+  }
+  await apiInstance.sendTransacEmail(email);
 }
 
 // utils/generateOTP.js
 function generateOTP(length = 6) {
-    // returns string like "483291"
-    return Math.floor(100000 + Math.random() * 900000).toString().slice(0, length);
+  // returns string like "483291"
+  return Math.floor(100000 + Math.random() * 900000).toString().slice(0, length);
 }
 
-async function verifyOtp(receiverEmail, passwordX, receiverOtp) {
-  try {
-    const otpRecord = await Otp.findOne({ email: receiverEmail });
-    console.log('otpre', otpRecord);
+async function verifyOtp(receiverEmail, passwordX, receiverOtp,firstName,lastName) {
 
-    if (!otpRecord) {
-      throw new customError('OTP not found or expired', 400);
-    }
+  const otpRecord = await Otp.findOne({ email: receiverEmail });
+  console.log('otpre', otpRecord);
 
-    if (otpRecord.otp !== receiverOtp) {
-      throw new customError('Incorrect OTP', 400);
-    }
-
-    const newUser = await User.create({
-      email: receiverEmail,
-      password: passwordX,
-      role: 'jobseeker',
-    });
-
-    const token = tokenGen(newUser._id);
-
-    await Otp.deleteOne({ email: receiverEmail }); // cleanup
-
-    return { newUser, token }; // ✅ Always return object
-  } catch (error) {
-    console.error('Error in verifyOtp:', error);
-    throw error; // ✅ rethrow so otpCheck receives it
+  if (!otpRecord) {
+    throw new customError('OTP not found or expired', 400);
   }
+
+  if (otpRecord.otp !== receiverOtp) {
+    throw new customError('Incorrect OTP', 400);
+  }
+
+  const newUser = await User.create({
+    email: receiverEmail,
+    password: passwordX,
+    role: 'jobseeker',
+  });
+
+  const newJobseeker = await Jobseeker.create({
+    user: newUser._id,
+    firstName: firstName,
+    lastName: lastName,
+  });
+  
+
+  const token = tokenGen(newUser._id);
+
+  await Otp.deleteOne({ email: receiverEmail }); // cleanup
+
+  return { newUser, token }; // ✅ Always return object
+
 }
 
 
 async function sendForgetMailX(receiverEmail) {
 
-    
-        console.log('forget pass-shub', receiverEmail)
-        const user = await User.findOne({ email: receiverEmail });
-        if (user) throw new customError("Email already exists", 404);
-        const otpX = generateOTP();
-        const ok = await Otp.findOneAndUpdate(
-            { email: receiverEmail },
-            { email: receiverEmail, otp: otpX, expireAt: new Date(Date.now() + 10 * 60 * 1000) },
-            { upsert: true, new: true }
-        );
+
+  console.log('forget pass-shub', receiverEmail)
+  const user = await User.findOne({ email: receiverEmail });
+  if (user) throw new customError("Email already exists", 404);
+  const otpX = generateOTP();
+  const ok = await Otp.findOneAndUpdate(
+    { email: receiverEmail },
+    { email: receiverEmail, otp: otpX, expireAt: new Date(Date.now() + 10 * 60 * 1000) },
+    { upsert: true, new: true }
+  );
 
 
 
-        //    Otp.create({email:receiverEmail,otp:otpX});
-        console.log('reset----', ok);
+  //    Otp.create({email:receiverEmail,otp:otpX});
+  console.log('reset----', ok);
 
 
-        // ✅ Reference image file
-        const imgLogo = path.join(__dirname, "../utils/logoJobZilla.png");
-        console.log('reset----', ok);
+  // ✅ Reference image file
+  const imgLogo = path.join(__dirname, "../utils/logoJobZilla.png");
+  console.log('reset----', ok);
 
 
 
 
-
-        const htmlTemplate = `
+  
+  const htmlTemplate = `
   <div style="font-family: Arial, sans-serif; background-color: #f4f5f7; padding: 40px 0;">
     <table align="center" cellpadding="0" cellspacing="0" width="100%"
       style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
@@ -134,8 +139,8 @@ async function sendForgetMailX(receiverEmail) {
   `;
 
 
-        await mailHandler(receiverEmail, htmlTemplate);
-  
+  await mailHandler(receiverEmail, htmlTemplate);
+
 
 
 }

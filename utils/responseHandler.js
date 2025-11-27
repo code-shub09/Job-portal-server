@@ -8,7 +8,7 @@ function responseHandler(fun) {
         console.log('fun-------')
       await fun(req, res);
     } catch (error) {
-        console.log('wrong-------')
+        console.log('wrong-------',error)
       if (error.name === "ValidationError") {
         error.statusCode = 400;
       }
