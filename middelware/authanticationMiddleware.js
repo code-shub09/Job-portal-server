@@ -4,7 +4,7 @@ const Jobseeker = require('../model/job_seeker');
 const User = require('../model/user');
 
 const protect = async (req, res, next) => {
-    console.log('head: ', req.header)
+    console.log('debug authent: ', req.header)
     try {
         let token;
         if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -44,7 +44,7 @@ const protect = async (req, res, next) => {
 
 const authorize = (...roles) => {
     return function middelwareAuth0(req, res, next) {
-        console.log('user  auth')
+        console.log('debug auth')
         if (!req.user) {
             console.log('user not auth')
             return res.status(401).json({ message: "User not authenticated" });
