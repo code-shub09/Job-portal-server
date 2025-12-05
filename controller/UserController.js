@@ -630,81 +630,65 @@ async function getJobseekerApplications(req, res) {
 
 // ------------------------------
 // Helper: Convert DB timeline → UI-friendly timeline
-// ------------------------------
+const UI_STAGES = [
+    { key: "applied", title: "Application Submitted", icon: "check" },
+    { key: "viewed", title: "Viewed by Recruiter", icon: "eye" },
+    { key: "shortlisted", title: "Shortlisted", icon: "star" },
+    { key: "interview", title: "Interview Scheduled", icon: "calendar" },
+    { key: "hired", title: "Hired", icon: "trophy" }
+];
+
 function buildTimeline(application) {
-    const order = ["applied", "viewed", "shortlisted", "interview", "rejected", "hired"];
-    const currentIndex = order.indexOf(application.status);
+    const logs = application.timeline || [];
+    const currentStatus = application.status;
 
-    return order.map((stage, index) => {
-        const stageEvent = application.timeline.find(t => t.status === stage);
-
+    return UI_STAGES.map(stage => {
+        const entry = logs.find(l => l.status === stage.key);
+        
         return {
-            title:
-                stage === "applied" ? "Application Submitted" :
-                    stage === "viewed" ? "Viewed by Recruiter" :
-                        stage === "shortlisted" ? "Shortlisted" :
-                            stage === "interview" ? "Interview Scheduled" :
-                                stage === "rejected" ? "Rejected" :
-                                    stage === "hired" ? "Hired" :
-                                        "Updated",
-
-            desc: stageEvent?.message || "",
-
-            date: stageEvent?.date || "Pending",
-
+            title: stage.title,
+            icon: stage.icon,
+            desc: entry?.message || "",
+            date: entry?.date || null,
             status:
-                index < currentIndex ? "completed" :
-                    index === currentIndex ? "current" :
-                        "pending",
-
-            icon:
-                stage === "applied" ? "check" :
-                    stage === "viewed" ? "eye" :
-                        stage === "shortlisted" ? "star" :
-                            stage === "interview" ? "calendar" :
-                                stage === "rejected" ? "close" :
-                                    "trophy"
+                stage.key === currentStatus
+                    ? "current"
+                    : entry
+                    ? "completed"
+                    : "pending"
         };
     });
 }
 
-// ------------------------------
-// GET /jobseeker/application/:appId
-// ------------------------------
-async function getSingleApplication(req, res) {
-    console.log('hello applicaton')
+
+ async function getSingleApplication(req, res){
     const { appId } = req.params;
 
-    // Application must belong to logged-in user
-    const application = await Application
-        .findOne({ _id: appId, applicant: req.user._id })
-        .populate("jobID") // get job details
-        .populate("applicant", "firstName lastName email phone"); // basic user info
+    const application = await Application.findOne({
+        _id: appId,
+        applicant: req.user._id
+    })
+        .populate("jobID")
+        .populate("applicant", "firstName lastName email phone");
 
     if (!application) {
-        return res.status(404).json({
-            success: false,
-            message: "Application not found"
-        });
+        return res.status(404).json({ success: false, message: "Application not found" });
     }
 
-    // Get recommended jobs (same skills)
+    const skills = application.jobID.skillsRequired || [];
+
     const recommendedJobs = await Job.find({
         _id: { $ne: application.jobID._id },
-        skills: {
-            $in: application.jobID.skillsRequired
-        }
+        skillsRequired: { $in: skills }
     }).limit(5);
 
     return res.status(200).json({
         success: true,
         application: {
-            // Basic
-            _id: application._id,
+            id: application._id,
             status: application.status,
             appliedAt: application.dates.appliedAt,
 
-            // Job details
             job: {
                 id: application.jobID._id,
                 title: application.jobID.title,
@@ -712,39 +696,28 @@ async function getSingleApplication(req, res) {
                 companyLogo: application.jobID.companyLogo,
                 location: application.jobID.location,
                 salaryRange: application.jobID.salaryRange,
-                type: application.jobID.jobType,
-                skills: application.jobID.skills
+                jobType: application.jobID.jobType,
+                skillsRequired: skills
             },
 
-            // Resume & Cover Letter
-            resume: application.resume,
-            coverLetter: application.coverLetter,
-
-            // Personal Info (Snapshot stored from User)
             personalInfo: {
-                name: `${application.applicant.firstName} ${application.applicant.lastName}`,
+                name: application.applicant.firstName + " " + application.applicant.lastName,
                 email: application.applicant.email,
                 phone: application.phoneNo
             },
 
-            // Experience Snapshot
+            resume: application.resume,
+            coverLetter: application.coverLetter,
             experience: application.experience,
-
-            // Education Snapshot
             education: application.educationSnapshot,
 
-            // Timeline converted for UI
             timeline: buildTimeline(application),
-
-            // Interview Details
             interview: application.interview,
-
-            // Recommended Jobs
             recommendedJobs
         }
     });
-
 };
+
 
 
 module.exports = {
