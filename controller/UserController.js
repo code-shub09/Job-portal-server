@@ -67,8 +67,8 @@ async function login(req, res) {
     res.status(200).cookie('jwt', token, {
         maxAge: 24 * 60 * 60 * 1000, // 1 day,
         httpOnly: true,
-        secure: true, // Use true if your site uses HTTPS
-        sameSite: "none", // Required for cross-origin cookies
+        secure: false, // Use true if your site uses HTTPS
+        sameSite: "lax", // Required for cross-origin cookies
     }).json({
         message: "User logged in succesfully ",
 
@@ -87,25 +87,84 @@ async function forgetPassword(req, res) {
 
 }
 
+// async function jobSearch(req, res) {
+//     const {location,jobTitle,jobType}=req.query;
+
+//     console.log('query:',req.query); 
+
+//     const filter = { status: "open" };
+
+//     if (location) {
+//         filter.location = { $regex: location, $options: 'i' };
+//     }
+
+//     if (jobTitle) {
+//         filter.title = { $regex: jobTitle, $options: 'i' }
+//     }
+//     // JOB TYPE FILTER
+//     if (jobType) {
+//       filter.jobType = jobType;
+//     }
+
+//     const jobsFilter = await Job.find({ ...filter });
+//     console.log('filter',jobsFilter);
+
+//     res.status(200).json({ success: true, message: 'done', jobs: jobsFilter });
+
+
+// }
+
+
 async function jobSearch(req, res) {
-    const { jobTitle, location } = req.body;
+  const { jobTitle, location, jobType, minSalary, experience } = req.query;
 
-    const filter = { status: "open" };
+  console.log("SEARCH QUERY:", req.query);
 
-    if (location) {
-        filter.location = { $regex: location, $options: 'i' };
+  const filter = { status: "open" };
+
+  /* ------------------- Job Title Filter ------------------- */
+  if (jobTitle) {
+    filter.title = { $regex: jobTitle, $options: "i" };
+  }
+
+  /* ------------------- Location Filter ------------------- */
+  if (location) {
+    filter.location = { $regex: location, $options: "i" };
+  }
+
+  /* ------------------- Job Type Filter ------------------- */
+  if (jobType) {
+    filter.jobType = jobType.toLowerCase();
+  }
+
+  /* ------------------- Minimum Salary Filter ------------------- */
+  if (minSalary) {
+    filter["salaryRange.min"] = { $gte: Number(minSalary)*100000 };
+  }
+
+  /* ------------------- Experience Filter ------------------- */
+  if (experience) {
+    // experience format like: "1-3", "3-5", "5+"
+    if (experience.includes("-")) {
+      const [min, max] = experience.split("-").map(Number);
+      filter.minExperience = { $gte: min, $lte: max };
+    } else if (experience.includes("+")) {
+      const min = Number(experience.replace("+", ""));
+      filter.minExperience = { $gte: min };
     }
+  }
 
-    if (jobTitle) {
-        filter.title = { $regex: jobTitle, $options: 'i' }
-    }
+  console.log("FINAL FILTER:", filter);
 
-    const jobsFilter = await Job.find({ ...filter });
-    // console.log('filter',jobsFilter);
+  /* ------------------- EXECUTE DB QUERY ------------------- */
+  const jobs = await Job.find(filter);
 
-    res.status(200).json({ success: true, message: 'done', jobs: jobsFilter });
-
-
+  return res.status(200).json({
+    success: true,
+    message: "Jobs fetched successfully",
+    total: jobs.length,
+    jobs,
+  });
 }
 
 async function JobDetail(req, res) {
@@ -232,9 +291,7 @@ async function addGraduation(req, res) {
 
 }
 
-// module.exports.forgetPassword=responseHandler(forgetPassword);
-// module.exports.register=responseHandler(register);
-// module.exports.login=responseHandler(login);
+
 async function addWorkexperience(req, res) {
     const userId = req.user._id;
 
@@ -740,3 +797,4 @@ module.exports = {
     getJobseekerApplications: responseHandler(getJobseekerApplications),
     getSingleApplication: responseHandler(getSingleApplication)
 };
+

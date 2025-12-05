@@ -9,7 +9,7 @@ const { upload, uploadResume } = require('../config/cloud');
 const { uploadResumePdf } = require('../middelware/resumeUpload');
 
 
-
+router.get('/job/search',jobSearch);
 router.get('/check-email',checkEmail);
 router.post('/job-search',jobSearch);
 router.get('/job-search/:id',JobDetail);

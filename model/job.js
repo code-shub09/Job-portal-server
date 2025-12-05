@@ -26,7 +26,11 @@ const JobSchema = new mongoose.Schema({
     ],
     index: true
   },
-
+  location: {
+    type: String,
+    required: true,
+    index: true, // for fast location search
+  },
 
   jobType: {
     type: String,
