@@ -28,10 +28,9 @@ async function createPost(req, res) {
 
 async function register(req, res) {
     console.log('refister puja')
-    // console.log(req.body);
+    console.log(req.body);
     const { companyName,
         companyDescription,
-        companyLogo,
         website,
         contactName,
         industry,
@@ -42,7 +41,8 @@ async function register(req, res) {
         city,
         password,
         confirmPassword } = req.body;
-    const profile = { companyName, companyDescription, website, contactName, designation, industry, phone, address, city }
+        const logoUrl = req.file ? req.file.path : null;
+    const profile = { companyName, companyDescription, website, contactName, designation, industry, phone, address, city ,companyLogoUrl:logoUrl}
     const userDetails = { email, password, role: 'employer', profile }
 
 

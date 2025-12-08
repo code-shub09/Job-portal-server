@@ -23,10 +23,7 @@ const { customError } = require("../utils/errorClass");
         throw new customError('User already exists',409);
     }
 
-    //  console.log('create user');
-    // create user
-
-     await sendForgetMail(email);
+    
 
     const newUser = await User.create({ email: email, password: password,role:userDetails.role});
       console.log('create newuser',newUser);
@@ -37,6 +34,7 @@ const { customError } = require("../utils/errorClass");
         const newJobSeeker = await Jobseeker.create({ user: newUser._id, firstName: profile.firstName,lastName:profile.lastName})
         console.log('job -seeker:',newJobSeeker);
     } else if (role == 'employer') {
+        console.log('create-user-details-employer',userDetails);
         const emp=await Employer.create({
             user: newUser._id,
             companyName: profile.companyName,
@@ -48,6 +46,7 @@ const { customError } = require("../utils/errorClass");
             Designation:profile.designation,
             Name: profile.contactName,
             phone: profile.phone,
+            companyLogoUrl:profile.companyLogoUrl
         })
         console.log('emp:',emp);
     } else if (role === 'admin') {

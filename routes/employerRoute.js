@@ -5,11 +5,12 @@ const router =express.Router();
 const {createPost,register, getAllJobPost, closeJob, deleteJob, getSingleJobDetails, getAllApplicaion, shortlistApplication} = require("../controller/employer");
 const { protect, authorize } = require('../middelware/authanticationMiddleware');
 const { jobSearch } = require('../controller/UserController');
+const { uploadCompanyLogo } = require('../config/companyLogoCloud');
 
 
 
 
-router.post('/register',register);
+router.post('/register',uploadCompanyLogo.single("companyLogo"),register);
 router.post('/post-job',protect,authorize('employer'),createPost);
 router.post('/job-search',jobSearch)
 router.get('/all-jobposts',protect,authorize('employer'),getAllJobPost);
