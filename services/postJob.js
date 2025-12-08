@@ -7,9 +7,9 @@ async function postJob(jobDetails,userX){
         const empX=await Employer.findOne({user:userX._id});
 
     // console.log('job details:',jobDetails);
-    const {title,description,jobType,minExperience,department,salaryMin,salaryMax,skillsRequired}=jobDetails;
+    const {title,description,jobType,minExperience,department,salaryMin,salaryMax,skillsRequired,location}=jobDetails;
 
-    const new_job=await Job.create({title:title,description:description,jobType:jobType,department:department,minExperience:minExperience,salaryRange:{min:salaryMin,max:salaryMax},postedBy:empX._id,skillsRequired:skillsRequired});
+    const new_job=await Job.create({title:title,description:description,jobType:jobType,department:department,minExperience:minExperience,salaryRange:{min:salaryMin,max:salaryMax},postedBy:empX._id,skillsRequired:skillsRequired,location:location});
      console.log('new job details:',new_job);
     return;  
     } catch (error) {
